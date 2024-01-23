@@ -1,0 +1,2 @@
+// counts the docs in the collection
+db.school.find().count();
