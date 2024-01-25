@@ -8,6 +8,9 @@ from functools import wraps
 from typing import Callable
 
 
+client = redis.Redis()
+
+
 def cache(method: Callable) -> Callable:
     '''
     caches the data
@@ -18,7 +21,6 @@ def cache(method: Callable) -> Callable:
         checks whether a url's is cached
         and tracks how many times get_page is called
         """
-        client = redis.Redis()
         client.incr(f'count:{url}')
         result = client.get(f'result:{url}')
         if result:
