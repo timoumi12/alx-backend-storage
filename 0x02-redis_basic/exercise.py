@@ -37,6 +37,24 @@ def call_history(method: Callable) -> Callable:
     return wrapper
 
 
+def replay(func: Callable):
+    '''
+    Display the history of calls of a particular function
+    '''
+    func_name = func.__qualname__
+    inputs_list = []
+    outputs_list = []
+    client = redis.Redis()
+    calls = client.get(func_name).decode('utf-8')
+    for input in client.lrange('{}:inputs'.format(func_name), 0, -1):
+        inputs_list.append(input.decode('utf-8'))
+    for output in client.lrange('{}:outputs'.format(func_name), 0, -1):
+        outputs_list.append(output.decode('utf-8'))
+    print('{} was called {} times:'.format(func_name, calls))
+    for input, output in zip(inputs_list, outputs_list):
+        print('{}(*{}) -> {}'.format(func_name, input, output))
+
+
 class Cache:
     '''Writing strings to Redis'''
 
@@ -46,7 +64,7 @@ class Cache:
         self._redis.flushdb()
 
     @count_calls
-    @call_history
+    @call_historyù
     def store(self, data: Union[str, bytes,  int,  float]) -> str:
         '''generate a random key, store the input data, return key'''
         key = str(uuid.uuid4())
