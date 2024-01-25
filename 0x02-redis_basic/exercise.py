@@ -6,6 +6,18 @@ import uuid
 from typing import Callable, Optional, Union
 
 
+def count_calls(method: Callable) -> Callable:
+    '''
+    Tracks the number of calls made to a method in a Cache class.
+    '''
+    @wraps(method)
+    def wrapper(self, *args, **kwargs) -> any:
+        '''Invokes the given method after incrementing its call counter.
+        '''
+        self._redis.incr(method.__qualname__)
+        return method(self, *args, **kwargs)
+    return wrapper
+
 class Cache:
     '''Writing strings to Redis'''
 
@@ -14,6 +26,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
     def store(self, data: Union[str, bytes,  int,  float]) -> str:
         '''generate a random key, store the input data, return key'''
         key = str(uuid.uuid4())
